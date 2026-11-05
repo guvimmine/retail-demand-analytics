@@ -1,0 +1,16 @@
+{
+  "train_end": "2016-09-30",
+  "calibration_start": "2016-10-01",
+  "calibration_end": "2016-12-31",
+  "test_start": "2017-01-01",
+  "test_end": "2017-12-31",
+  "lead_time_days": 7,
+  "review_days": 1,
+  "warmup_days": 28,
+  "error_quantile": 0.95,
+  "holding_cost_per_unit_day": 0.02,
+  "lost_sales_penalty_per_unit": 1.0,
+  "protection_horizon_days": 8,
+  "calibration_windows_per_series": 85,
+  "cost_units": "illustrative, not currency or measured business savings"
+}

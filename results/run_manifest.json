@@ -1,0 +1,42 @@
+{
+  "data_sha256": "038f25690a65149c94f86ddd3deceda20c037a5cfd754cafdfc539a72992f2ed",
+  "rows": 913000,
+  "series": 500,
+  "date_start": "2013-01-01",
+  "date_end": "2017-12-31",
+  "python": "3.9.6",
+  "packages": {
+    "numpy": "2.0.2",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.6.1",
+    "matplotlib": "3.9.4"
+  },
+  "settings": {
+    "forecast_origins": [
+      "2017-03-31",
+      "2017-06-30",
+      "2017-09-30",
+      "2017-12-03"
+    ],
+    "forecast_horizon_days": 28,
+    "model": {
+      "max_iter": 300,
+      "learning_rate": 0.08,
+      "random_state": 42,
+      "early_stopping": false
+    },
+    "inventory": {
+      "train_end": "2016-09-30",
+      "calibration_start": "2016-10-01",
+      "calibration_end": "2016-12-31",
+      "test_start": "2017-01-01",
+      "test_end": "2017-12-31",
+      "lead_time_days": 7,
+      "review_days": 1,
+      "warmup_days": 28,
+      "error_quantile": 0.95,
+      "holding_cost_per_unit_day": 0.02,
+      "lost_sales_penalty_per_unit": 1.0
+    }
+  }
+}

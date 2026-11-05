@@ -1,43 +1,32 @@
-"""SKU-level safety-stock / reorder-point table.
+"""Static normal-demand reference fitted before inventory calibration and test.
 
-Method: for each store-item, demand over a 7-day lead time is assumed normal;
-reorder point = mean demand over lead time + z(0.95) * std_daily * sqrt(L).
-Outputs the top-20 SKUs by average daily demand.
+This reference is not the empirical-buffer policy used in the inventory backtest.
+95% is an assumed cycle-service target, not an observed fill rate.
 """
-import os
+import argparse
 import numpy as np
 import pandas as pd
+from .common import DEFAULT_DATA, DEFAULT_OUT, load_data, output_dir
 
-DATA = os.path.join(os.path.dirname(__file__), '..', 'data', 'train.csv')
-OUT = os.path.join(os.path.dirname(__file__), '..', 'results')
-LEAD_TIME_DAYS = 7
-Z = 1.645  # 95% service level
+
+def run(data_path=DEFAULT_DATA, out_path=DEFAULT_OUT, cutoff="2016-09-30"):
+    frame = load_data(data_path)
+    stats = frame[frame.date <= pd.Timestamp(cutoff)].groupby(["store", "item"]).sales.agg(["mean", "std"])
+    stats["safety_stock"] = np.ceil(1.645 * stats["std"] * np.sqrt(7)).astype(int)
+    stats["reorder_point"] = np.ceil(stats["mean"] * 7 + 1.645 * stats["std"] * np.sqrt(7)).astype(int)
+    stats = stats.rename(columns={"mean": "mean_daily", "std": "std_daily"}).reset_index()
+    stats["training_cutoff"] = cutoff
+    stats.sort_values("mean_daily", ascending=False).head(20).to_csv(
+        output_dir(out_path) / "safety_stock_top20.csv", index=False, float_format="%.4f")
+    return stats
 
 
 def main():
-    df = pd.read_csv(DATA, parse_dates=['date'])
-    g = df.groupby(['store', 'item'])['sales']
-    stats_df = pd.DataFrame({
-        'mean_daily': g.mean(),
-        'std_daily': g.std(),
-        'total_sales': g.sum(),
-    }).reset_index()
-
-    mu_L = stats_df['mean_daily'] * LEAD_TIME_DAYS
-    sigma_L = stats_df['std_daily'] * np.sqrt(LEAD_TIME_DAYS)
-    stats_df['safety_stock'] = np.ceil(Z * sigma_L).astype(int)
-    stats_df['reorder_point'] = np.ceil(mu_L + Z * sigma_L).astype(int)
-
-    top = (stats_df.sort_values('mean_daily', ascending=False)
-           .head(20)[['store', 'item', 'mean_daily', 'std_daily',
-                      'safety_stock', 'reorder_point']])
-    top['mean_daily'] = top['mean_daily'].round(1)
-    top['std_daily'] = top['std_daily'].round(1)
-    os.makedirs(OUT, exist_ok=True)
-    top.to_csv(os.path.join(OUT, 'safety_stock_top20.csv'), index=False)
-    print(top.to_string(index=False))
-    print(f"\nassumptions: lead time L={LEAD_TIME_DAYS}d, service level 95% (z={Z})")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--data", default=str(DEFAULT_DATA))
+    parser.add_argument("--out", default=str(DEFAULT_OUT))
+    args = parser.parse_args(); run(args.data, args.out)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
